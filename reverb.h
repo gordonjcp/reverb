@@ -27,6 +27,7 @@ THIS SOFTWARE.
 #define COMB_SIZE 4096
 #define COMB_MASK (COMB_SIZE-1)
 #define NUM_COMBS 4
+#define NUM_APS 3
 
 typedef struct {
     /* structure for reverb parameters */
@@ -36,6 +37,9 @@ typedef struct {
     /* internal plugin variables */
     float comb[NUM_COMBS][COMB_SIZE];   /* buffers for comb filters */
     unsigned long comb_pos;             /* position within comb filter */
+
+    float ap[NUM_APS][COMB_SIZE];        /* lazy, reuse comb size */
+    unsigned long ap_pos;               /* position within allpass filter */
 
 } reverb_t;
 

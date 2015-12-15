@@ -90,8 +90,7 @@ static void run_reverb(LADSPA_Handle instance, unsigned long sample_count) {
     LADSPA_Data * const input = plugin->input;
     LADSPA_Data * const output = plugin->output;
 
-    plugin->params.decay =  *plugin->decay;
-
+    plugin->params.decay = *plugin->decay;
     reverb(input, output, sample_count, &plugin->params);
 
 }

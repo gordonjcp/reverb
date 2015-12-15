@@ -21,14 +21,20 @@ THIS SOFTWARE.
 
 #include "reverb.h"
 
-/* these values are taken from the CCRMA article on Schroeder's original reverb */
+/* these values are based on the CCRMA article on Schroeder's original reverb */
+/* they have been scaled to correspond to 44.1kHz Fs instead of 25kHz */
 unsigned int tap[NUM_COMBS] = {2975, 2824, 3621, 3970};
-float tap_gain[NUM_COMBS] = {0.773, 0.802, 0.753, 0.733};
+float tap_gain[NUM_COMBS] = {0.964, 1.0, 0.939, 0.913};
+
+unsigned int ap_tap[NUM_APS] = {612, 199, 113};
+
 
 void reverb(float *in, float *out, unsigned long sample_count, reverb_t *params) {
     // handle the actual processing
     unsigned long pos;
     unsigned long comb_pos = params->comb_pos;
+    unsigned long ap_pos = params->ap_pos;
+
     int c;
 
     float * const input = in;
@@ -42,15 +48,28 @@ void reverb(float *in, float *out, unsigned long sample_count, reverb_t *params)
     for (pos = 0; pos < sample_count; pos++) {
         /* loop around the comb filters */
         temp = 0;
-        for (c = 0; c<3; c++) {
+
+        for (c = 0; c<NUM_COMBS; c++) {
             params->comb[c][(comb_pos + tap[c]) & COMB_MASK] =
                 input[pos] + (decay * tap_gain[c]) * params->comb[c][comb_pos];
             temp += params->comb[c][comb_pos];
         }
+
+
+        /* loop around the allpass filters */
+        for (c = 0; c<NUM_APS; c++) {
+            params->ap[c][(ap_pos + ap_tap[c]) & COMB_MASK] =
+                temp + (decay * -0.3535) * params->comb[c][ap_pos];
+            temp = (decay * 0.3535 * temp) + params->ap[c][ap_pos];
+        }
+
+
         output[pos] = temp * 0.35;
         comb_pos++;
         comb_pos &= COMB_MASK;  /* increment and wrap buffer */
+        ap_pos++;
+        ap_pos &= COMB_MASK;  /* increment and wrap buffer */
         params->comb_pos = comb_pos;
+        params->ap_pos = ap_pos;
     }
-
 }
