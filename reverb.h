@@ -19,9 +19,26 @@ THIS SOFTWARE.
 
 */
 
+#ifndef __REVERB_H
+#define __REVERB_H
+
+/* note that buffers need to be a power of 2 */
+/* if we scale the tap sizes for higher sample rates, this will need to be larger */
+#define COMB_SIZE 4096
+#define COMB_MASK (COMB_SIZE-1)
+#define NUM_COMBS 4
+
 typedef struct {
     /* structure for reverb parameters */
+    /* controls */
     float decay;
+
+    /* internal plugin variables */
+    float comb[NUM_COMBS][COMB_SIZE];   /* buffers for comb filters */
+    unsigned long comb_pos;             /* position within comb filter */
+
 } reverb_t;
 
 void reverb(float *in, float *out, unsigned long sample_count, reverb_t *params);
+
+#endif

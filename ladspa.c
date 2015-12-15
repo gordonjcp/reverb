@@ -18,7 +18,9 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
 */
+
 #include <stdlib.h>
+#include <strings.h>
 
 #include "ladspa.h"
 #include "reverb.h"
@@ -75,6 +77,9 @@ static LADSPA_Handle instantiate(
     Reverb *plugin = (Reverb *)malloc(sizeof(Reverb));
 
     /* in here we should set up any initial state */
+
+    bzero(plugin->params.comb, sizeof(float) * COMB_SIZE * NUM_COMBS);
+
     return (LADSPA_Handle)plugin;
 }
 
