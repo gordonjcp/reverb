@@ -33,6 +33,7 @@ typedef struct {
     /* structure for reverb parameters */
     /* controls */
     float decay;
+    float size;
 
     /* internal plugin variables */
     float comb[NUM_COMBS][COMB_SIZE];   /* buffers for comb filters */

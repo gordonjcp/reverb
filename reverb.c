@@ -42,6 +42,13 @@ void reverb(float *in, float *out, unsigned long sample_count, reverb_t *params)
 
     float decay=params->decay;
 
+    tap[0] = (int)(2975 * params->size);
+    tap[1] = (int)(2824 * (params->size/2));
+    tap[2] = (int)(3621 * params->size);
+    tap[3] = (int)(3970 * (params->size/1.5));
+
+    ap_tap[2] = (int)(400 * params->size);
+
     float temp;
 
     /* loop around the buffer */
@@ -57,12 +64,13 @@ void reverb(float *in, float *out, unsigned long sample_count, reverb_t *params)
 
 
         /* loop around the allpass filters */
+#if 1
         for (c = 0; c<NUM_APS; c++) {
             params->ap[c][(ap_pos + ap_tap[c]) & COMB_MASK] =
                 temp + (decay * -0.3535) * params->comb[c][ap_pos];
             temp = (decay * 0.3535 * temp) + params->ap[c][ap_pos];
         }
-
+#endif
 
         output[pos] = temp * 0.35;
         comb_pos++;
