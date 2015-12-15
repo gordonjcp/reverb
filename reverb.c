@@ -21,16 +21,19 @@ THIS SOFTWARE.
 
 #include "reverb.h"
 
-void reverb(float *in, float *out, unsigned long sample_count) {
+void reverb(float *in, float *out, unsigned long sample_count, reverb_t *params) {
     // handle the actual processing
     unsigned long pos;
 
     float * const input = in;
     float * const output = out;
 
+    float gain=1;
+
     for (pos = 0; pos < sample_count; pos++) {
         /* distort the audio signal really badly */
-        output[pos] = input[pos % 128];
+        output[pos] = input[pos] * gain;
+        gain *= params->decay;
     }
 
 }

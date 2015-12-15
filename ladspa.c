@@ -23,10 +23,12 @@ THIS SOFTWARE.
 #include "ladspa.h"
 #include "reverb.h"
 
-
-/* temporary */
-#define INPUT 0
-#define OUTPUT 1
+enum ports {
+    R_INPUT,
+    R_OUTPUT,
+    R_DECAY,
+    R_MAXPORT
+};
 
 static LADSPA_Descriptor *reverb_descriptor = NULL;
 
@@ -36,6 +38,8 @@ void _fini(void);
 typedef struct {
     LADSPA_Data *input;
     LADSPA_Data *output;
+    LADSPA_Data *decay;
+    reverb_t params;
 } Reverb;
 
 const LADSPA_Descriptor *ladspa_descriptor(unsigned long index) {
@@ -53,11 +57,14 @@ static void connect_port(LADSPA_Handle instance, unsigned long port, LADSPA_Data
     Reverb *plugin = (Reverb *) instance;
 
     switch(port) {
-        case INPUT:
+        case R_INPUT:
             plugin->input = data;
             break;
-        case OUTPUT:
+        case R_OUTPUT:
             plugin->output = data;
+            break;
+        case R_DECAY:
+            plugin->decay = data;
             break;
     }
 }
@@ -66,8 +73,6 @@ static LADSPA_Handle instantiate(
     const LADSPA_Descriptor *descriptor __attribute__((unused)),
     unsigned long rate __attribute__((unused))) {
     Reverb *plugin = (Reverb *)malloc(sizeof(Reverb));
-
-
 
     /* in here we should set up any initial state */
     return (LADSPA_Handle)plugin;
@@ -80,7 +85,9 @@ static void run_reverb(LADSPA_Handle instance, unsigned long sample_count) {
     LADSPA_Data * const input = plugin->input;
     LADSPA_Data * const output = plugin->output;
 
-    reverb(input, output, sample_count);
+    plugin->params.decay =  *plugin->decay;
+
+    reverb(input, output, sample_count, &plugin->params);
 
 }
 
@@ -99,26 +106,33 @@ void _init(void) {
         reverb_descriptor->Name = "Simple Reverb";
         reverb_descriptor->Maker = "Gordonjcp <gordonjcp@gjcp.net";
         reverb_descriptor->Copyright = "ISC";
-        reverb_descriptor->PortCount = 2;   /* obviously we'll need more */
+        reverb_descriptor->PortCount = R_MAXPORT;   /* obviously we'll need more */
 
         /* allocate port descriptors */
-        port_descriptors = (LADSPA_PortDescriptor *)calloc(2, sizeof(LADSPA_PortDescriptor));
+        port_descriptors = (LADSPA_PortDescriptor *)calloc(R_MAXPORT, sizeof(LADSPA_PortDescriptor));
         reverb_descriptor->PortDescriptors = (const LADSPA_PortDescriptor *)port_descriptors;
 
-        port_range_hints = (LADSPA_PortRangeHint *)calloc(2, sizeof(LADSPA_PortRangeHint));
+        port_range_hints = (LADSPA_PortRangeHint *)calloc(R_MAXPORT, sizeof(LADSPA_PortRangeHint));
         reverb_descriptor->PortRangeHints = (const LADSPA_PortRangeHint *)port_range_hints;
-        port_names = (char **)calloc(2, sizeof(char*));
+        port_names = (char **)calloc(R_MAXPORT, sizeof(char*));
         reverb_descriptor->PortNames = (const char **)port_names;
 
         /* define the ports */
-        /* temporary - only have input and output for now */
-        port_descriptors[INPUT] = LADSPA_PORT_INPUT | LADSPA_PORT_AUDIO;
-        port_names[INPUT] = ("Input");
-        port_range_hints[INPUT].HintDescriptor = 0;
+        port_descriptors[R_INPUT] = LADSPA_PORT_INPUT | LADSPA_PORT_AUDIO;
+        port_names[R_INPUT] = ("Input");
+        port_range_hints[R_INPUT].HintDescriptor = 0;
 
-        port_descriptors[OUTPUT] = LADSPA_PORT_OUTPUT | LADSPA_PORT_AUDIO;
-        port_names[OUTPUT] = ("Output");
-        port_range_hints[OUTPUT].HintDescriptor = 0;
+        port_descriptors[R_OUTPUT] = LADSPA_PORT_OUTPUT | LADSPA_PORT_AUDIO;
+        port_names[R_OUTPUT] = ("Output");
+        port_range_hints[R_OUTPUT].HintDescriptor = 0;
+
+        /* Decay control */
+        port_descriptors[R_DECAY] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
+        port_names[R_DECAY] = "Decay";
+        port_range_hints[R_DECAY].HintDescriptor =
+            LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE | LADSPA_HINT_DEFAULT_MIDDLE;
+        port_range_hints[R_DECAY].LowerBound = 0.0f;
+        port_range_hints[R_DECAY].UpperBound = 1.0f;
 
         /* set the various callbacks */
         reverb_descriptor->activate = NULL;

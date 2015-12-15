@@ -19,4 +19,9 @@ THIS SOFTWARE.
 
 */
 
-void reverb(float *in, float *out, unsigned long sample_count);
+typedef struct {
+    /* structure for reverb parameters */
+    float decay;
+} reverb_t;
+
+void reverb(float *in, float *out, unsigned long sample_count, reverb_t *params);
