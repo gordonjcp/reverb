@@ -21,12 +21,17 @@ THIS SOFTWARE.
 #include <stdlib.h>
 
 #include "ladspa.h"
+#include "reverb.h"
+
 
 /* temporary */
 #define INPUT 0
 #define OUTPUT 1
 
 static LADSPA_Descriptor *reverb_descriptor = NULL;
+
+void _init(void);
+void _fini(void);
 
 typedef struct {
     LADSPA_Data *input;
@@ -57,8 +62,12 @@ static void connect_port(LADSPA_Handle instance, unsigned long port, LADSPA_Data
     }
 }
 
-static LADSPA_Handle instantiate(const LADSPA_Descriptor *descriptor, unsigned long rate) {
+static LADSPA_Handle instantiate(
+    const LADSPA_Descriptor *descriptor __attribute__((unused)),
+    unsigned long rate __attribute__((unused))) {
     Reverb *plugin = (Reverb *)malloc(sizeof(Reverb));
+
+
 
     /* in here we should set up any initial state */
     return (LADSPA_Handle)plugin;
@@ -71,15 +80,11 @@ static void run_reverb(LADSPA_Handle instance, unsigned long sample_count) {
     LADSPA_Data * const input = plugin->input;
     LADSPA_Data * const output = plugin->output;
 
-    unsigned int pos;
+    reverb(input, output, sample_count);
 
-    /* stub, just copy input to output for now */
-    for (pos = 0; pos < sample_count; pos++) {
-        output[pos] = input[pos];
-    }
 }
 
-void _init() {
+void _init(void) {
     /* called when plugin is loaded */
     char **port_names;
     LADSPA_PortDescriptor *port_descriptors;
@@ -128,12 +133,11 @@ void _init() {
     }
 }
 
-void _fini() {
+void _fini(void) {
         if (reverb_descriptor) {
                 free((LADSPA_PortDescriptor *)reverb_descriptor->PortDescriptors);
                 free((char **)reverb_descriptor->PortNames);
                 free((LADSPA_PortRangeHint *)reverb_descriptor->PortRangeHints);
                 free(reverb_descriptor);
         }
-
 }

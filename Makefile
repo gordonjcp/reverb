@@ -18,12 +18,22 @@
 CC	= gcc
 CFLAGS	+= -I. -O3 -Wall -fomit-frame-pointer -fstrength-reduce -funroll-loops -ffast-math -c -fPIC -DPIC
 LDFLAGS	+= -nostartfiles -shared -Wl,-Bsymbolic -lc -lm -lrt
-MODULES = ladspa.c
+TARGET = reverb.so
+HEADERS = ladspa.h reverb.h
+OBJECTS = $(patsubst %.c, %.o, $(wildcard *.c))
 
-all: $(MODULES:%.c=%.so)
+default: $(TARGET)
 
-%.o: %.c ladspa.h
-	$(CC) $(CFLAGS) $< -o $@
+all: default
 
-%.so: %.o
-	$(CC) -o reverb.so $< $(LDFLAGS)
+%.o: %.c $(HEADERS)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(TARGET): $(OBJECTS)
+	echo $(OBJECTS)
+	$(CC) -o reverb.so $^ $(LDFLAGS)
+
+clean:
+	rm *.o
+	rm *.so
+	
