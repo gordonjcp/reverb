@@ -19,6 +19,8 @@ THIS SOFTWARE.
 
 */
 
+#include <math.h>
+
 #include "reverb.h"
 
 /* these values are based on the CCRMA article on Schroeder's original reverb */
@@ -40,7 +42,29 @@ void reverb(float *in, float *out, unsigned long sample_count, reverb_t *params)
     float * const input = in;
     float * const output = out;
 
+    float in_s, in_s1, temp;
+
+    float gl, gh;
+    float tilt = params->colour;
     float decay=params->decay;
+
+    if (tilt > 0) {
+        gl = -5 * tilt;
+        gh = tilt;
+    } else {
+        gl = -tilt;
+        gh = 5 * tilt;
+    }
+
+    gl = exp(gl/8.66)-1;
+    gh = exp(gh/8.66)-1;
+
+//printf("%f %f      ", gl, gh);
+
+float n = 1/(5340 + 132300.0);
+float a0 = 2 * 5340 * n;
+float b1 = (132300 - 5340) * n;
+
 
     tap[0] = (int)(2975 * params->size);
     tap[1] = (int)(2824 * (params->size/2));
@@ -49,16 +73,18 @@ void reverb(float *in, float *out, unsigned long sample_count, reverb_t *params)
 
     ap_tap[2] = (int)(400 * params->size);
 
-    float temp;
-
     /* loop around the buffer */
     for (pos = 0; pos < sample_count; pos++) {
         /* loop around the comb filters */
         temp = 0;
+        in_s = input[pos]/3;
+
+        params->lpo = a0 * in_s + b1 * params->lpo;
+        in_s1 = in_s + gl * params->lpo + gh *(in_s - params->lpo);
 
         for (c = 0; c<NUM_COMBS; c++) {
             params->comb[c][(comb_pos + tap[c]) & COMB_MASK] =
-                input[pos] + (decay * tap_gain[c]) * params->comb[c][comb_pos];
+                in_s1 + (decay * tap_gain[c]) * params->comb[c][comb_pos];
             temp += params->comb[c][comb_pos];
         }
 

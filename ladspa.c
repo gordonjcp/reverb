@@ -28,6 +28,7 @@ THIS SOFTWARE.
 enum ports {
     R_INPUT,
     R_OUTPUT,
+    R_COLOUR,
     R_SIZE,
     R_DECAY,
     R_MAXPORT
@@ -41,6 +42,7 @@ void _fini(void);
 typedef struct {
     LADSPA_Data *input;
     LADSPA_Data *output;
+    LADSPA_Data *colour;
     LADSPA_Data *size;
     LADSPA_Data *decay;
     reverb_t params;
@@ -66,6 +68,9 @@ static void connect_port(LADSPA_Handle instance, unsigned long port, LADSPA_Data
             break;
         case R_OUTPUT:
             plugin->output = data;
+            break;
+        case R_COLOUR:
+            plugin->colour = data;
             break;
         case R_SIZE:
             plugin->size = data;
@@ -97,6 +102,8 @@ static void run_reverb(LADSPA_Handle instance, unsigned long sample_count) {
 
     plugin->params.decay = *plugin->decay;
     plugin->params.size = *plugin->size;
+    plugin->params.colour = *plugin->colour;
+
 
     reverb(input, output, sample_count, &plugin->params);
 
@@ -136,6 +143,15 @@ void _init(void) {
         port_descriptors[R_OUTPUT] = LADSPA_PORT_OUTPUT | LADSPA_PORT_AUDIO;
         port_names[R_OUTPUT] = ("Output");
         port_range_hints[R_OUTPUT].HintDescriptor = 0;
+
+        /* Decay control */
+        port_descriptors[R_COLOUR] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;
+        port_names[R_COLOUR] = "Colour";
+        port_range_hints[R_COLOUR].HintDescriptor =
+            LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE |
+                LADSPA_HINT_DEFAULT_MIDDLE ;
+        port_range_hints[R_COLOUR].LowerBound = -6.0f;
+        port_range_hints[R_COLOUR].UpperBound = 6.0f;
 
         /* Room size control */
         port_descriptors[R_SIZE] = LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL;

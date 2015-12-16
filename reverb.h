@@ -34,6 +34,10 @@ typedef struct {
     /* controls */
     float decay;
     float size;
+    float colour;
+
+    float lpo;
+
 
     /* internal plugin variables */
     float comb[NUM_COMBS][COMB_SIZE];   /* buffers for comb filters */
