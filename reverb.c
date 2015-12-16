@@ -93,7 +93,7 @@ float b1 = (132300 - 5340) * n;
 #if 1
         for (c = 0; c<NUM_APS; c++) {
             params->ap[c][(ap_pos + ap_tap[c]) & COMB_MASK] =
-                temp + (decay * -0.3535) * params->comb[c][ap_pos];
+                temp + (decay * -0.3535) * params->ap[c][ap_pos];
             temp = (decay * 0.3535 * temp) + params->ap[c][ap_pos];
         }
 #endif
