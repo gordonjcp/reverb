@@ -87,8 +87,10 @@ static LADSPA_Handle instantiate(
     Reverb *plugin = (Reverb *)malloc(sizeof(Reverb));
 
     /* in here we should set up any initial state */
-
     bzero(plugin->params.comb, sizeof(float) * COMB_SIZE * NUM_COMBS);
+    bzero(plugin->params.ap, sizeof(float) * COMB_SIZE * NUM_APS);
+    plugin->params.comb_pos=0;
+    plugin->params.ap_pos=0;
 
     return (LADSPA_Handle)plugin;
 }
